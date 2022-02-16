@@ -59,9 +59,13 @@ def get_frequency_dict(sequence: Union[str, list]) -> dict[str, int]:
 
 
 def get_word_score(word: str, n: int) -> int:
-    """  Returns the score for a word. Assumes the word is a valid word. """
+    """ 
+	Returns the score for a word. Assumes the word is a
+    valid word.
+	"""
+
     word_score = 0
-    first_comp = sum([SCRABBLE_LETTER_VALUES[x] for x in word.lower()])
+    first_comp = sum([SCRABBLE_LETTER_VALUES.get(x, 0) for x in word.lower()])
     second_comp = 7 * len(word) - 3*(n-len(word))
     # Implementation of ternary operator
     word_score = first_comp * (second_comp if second_comp > 1 else 1)
@@ -69,7 +73,9 @@ def get_word_score(word: str, n: int) -> int:
 
 
 def display_hand(hand: dict[str, int]):
-    """ Displays the letters currently in the hand. """
+    """ 
+	Displays the letters currently in the hand. 
+	"""
 
     for letter in hand.keys():
         for j in range(hand[letter]):
@@ -78,31 +84,29 @@ def display_hand(hand: dict[str, int]):
 
 
 def deal_hand(n: int) -> dict:
-    """
-    Returns a random hand containing n lowercase letters.
-    ceil(n/3) letters in the hand should be VOWELS (note,
-    ceil(n/3) means the smallest integer not less than n/3).
+	"""
+	Returns a random hand containing n lowercase letters.
+	"""
 
-    Hands are represented as dictionaries. The keys are
-    letters and the values are the number of times the
-    particular letter is repeated in that hand.
-    """
+	hand = {}
+	num_vowels = int(math.ceil(n / 3)) - 1
+	hand["*"] = 1
+	for i in range(num_vowels):
+		x = random.choice(VOWELS)
+		hand[x] = hand.get(x, 0) + 1
 
-    hand = {}
-    num_vowels = int(math.ceil(n / 3))
+	for i in range(num_vowels, n):
+		x = random.choice(CONSONANTS)
+		hand[x] = hand.get(x, 0) + 1
 
-    for i in range(num_vowels):
-        x = random.choice(VOWELS)
-        hand[x] = hand.get(x, 0) + 1
-
-    for i in range(num_vowels, n):
-        x = random.choice(CONSONANTS)
-        hand[x] = hand.get(x, 0) + 1
-
-    return hand
+	return hand
 
 
 def update_hand(hand: dict[str, int], word: str) -> dict[str, int]:
+	"""
+	Updates the hand: uses up the letters in the given word
+	and returns the new hand, without those letters in it.
+	"""
 	new_hand = dict()
 	for x in hand.keys():
 		new_hand[x] = hand[x]
@@ -114,20 +118,34 @@ def update_hand(hand: dict[str, int], word: str) -> dict[str, int]:
 
 
 def is_valid_word(word: str, hand: dict[str, int], word_list: list) -> boolean:
-	if word.lower() in word_list and all([x in hand.keys() for x in word.lower()]):
-		return True
+	"""
+	Returns True if word is in the word_list and is entirely
+    composed of letters in the hand. 
+	"""
+	word_check = False
+	if "*" in word:
+		for char in VOWELS:
+			new_word = word.replace("*", char) # str.replace returns a new string
+			if new_word.lower() in word_list: # check the new word against the word list
+				word_check = True
+				break
+	else: word_check = word.lower() in word_list
+
+	word_to_dict = get_frequency_dict(word.lower())
+	keys_in_hand = all([x in hand.keys() and word_to_dict[x] <= hand[x] for x in word.lower()])
+	
+	if word_check and keys_in_hand:	return True
 	else: return False
 
-
 def calculate_handlen(hand):
-    """ 
-    Returns the length (number of letters) in the current hand.
+	""" 
+	Returns the length (number of letters) in the current hand.
 
-    hand: dictionary (string-> int)
-    returns: integer
-    """
-
-    pass  # TO DO... Remove this line when you implement this function
+	hand: dictionary (string-> int)
+	returns: integer
+	"""
+	count = sum([hand.get(x, 0) for x in hand.keys()])
+	return count
 
 
 def play_hand(hand, word_list):

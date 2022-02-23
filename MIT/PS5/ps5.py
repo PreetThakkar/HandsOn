@@ -3,6 +3,7 @@
 # Collaborators:
 # Time:
 
+from numpy import true_divide
 import feedparser
 import string
 import time
@@ -11,17 +12,11 @@ from project_util import translate_html
 from mtTkinter import *
 from datetime import datetime
 import pytz
-# My imports
 import re
+# Import to resolve issue with feedparsing and Python 3.10
+import collections
+collections.Callable = collections.abc.Callable
 
-
-#-----------------------------------------------------------------------
-
-#======================
-# Code for retrieving and parsing
-# Google and Yahoo News feeds
-# Do not change this code
-#======================
 
 def process(url):
     """
@@ -40,7 +35,7 @@ def process(url):
 
         try:
             pubdate = datetime.strptime(pubdate, "%a, %d %b %Y %H:%M:%S %Z")
-            pubdate.replace(tzinfo=pytz.timezone("GMT"))
+            pubdate.replace(tzinfo=pytz.timezone("EST"))
           #  pubdate = pubdate.astimezone(pytz.timezone('EST'))
           #  pubdate.replace(tzinfo=None)
         except ValueError:
@@ -50,13 +45,11 @@ def process(url):
         ret.append(newsStory)
     return ret
 
-#======================
+# ======================
 # Data structure design
-#======================
+# ======================
 
-# Problem 1
 
-# TODO: NewsStory
 class NewsStory:
     def __init__(self, guid, title, description, link, pubdate) -> None:
         self.guid = guid
@@ -65,27 +58,28 @@ class NewsStory:
         self.link = link
         self.pubdate = pubdate
 
-    def get_guid(self):
+    def get_guid(self) -> str:
         return self.guid
 
-    def get_title(self):
+    def get_title(self) -> str:
         return self.title
 
-    def get_description(self):
+    def get_description(self) -> str:
         return self.description
 
-    def get_link(self):
+    def get_link(self) -> str:
         return self.link
 
-    def get_pubdate(self):
+    def get_pubdate(self) -> datetime:
         return self.pubdate
 
-#======================
+# ======================
 # Triggers
-#======================
+# ======================
+
 
 class Trigger(object):
-    def evaluate(self, story):
+    def evaluate(self, story: NewsStory):
         """
         Returns True if an alert should be generated
         for the given news item, or False otherwise.
@@ -93,96 +87,111 @@ class Trigger(object):
         # DO NOT CHANGE THIS!
         raise NotImplementedError
 
-# PHRASE TRIGGERS
 
-# Problem 2
-# TODO: PhraseTrigger
 class PhraseTrigger:
-    def __init__(self, phrase) -> None:
+    def __init__(self, phrase: str) -> None:
         self.phrase = phrase.lower()
-    
-    def is_phrase_in(self, text):
+
+    def is_phrase_in(self, text: str) -> bool:
         clean_word_list = re.split(r"\W+", text.lower())
         # check for boundary after the phrase
         if re.findall(rf"\b{self.phrase}\b", " ".join(clean_word_list)):
             return True
-        else: 
+        else:
             return False
 
-# Problem 3
-# TODO: TitleTrigger
+
 class TitleTrigger(PhraseTrigger):
-    def __init__(self, phrase) -> None:
+    def __init__(self, phrase: str) -> None:
         super().__init__(phrase)
 
-    def evaluate(self, story: NewsStory):
+    def evaluate(self, story: NewsStory) -> bool:
         # ?? create a variable to pass to is_phrase_in function
         return self.is_phrase_in(story.get_title())
 
-# Problem 4
-# TODO: DescriptionTrigger
+
 class DescriptionTrigger(PhraseTrigger):
-    def __init__(self, phrase) -> None:
+    def __init__(self, phrase: str) -> None:
         super().__init__(phrase)
 
-    def evaluate(self, story: NewsStory):
+    def evaluate(self, story: NewsStory) -> bool:
         return self.is_phrase_in(story.get_description())
 
-# TIME TRIGGERS
 
-# Problem 5
-# TODO: TimeTrigger
-# Constructor:
-#        Input: Time has to be in EST and in the format of "%d %b %Y %H:%M:%S".
-#        Convert time from string to a datetime before saving it as an attribute.
-
-# Problem 6
-# TODO: BeforeTrigger and AfterTrigger
+class TimeTrigger(Trigger):
+    def __init__(self, time_str: str) -> None:
+        self.time = datetime.strptime(time_str, "%d %b %Y %H:%M:%S")
+        self.time = self.time.replace(
+            tzinfo=pytz.timezone("EST"))  # set timezone
 
 
-# COMPOSITE TRIGGERS
+class BeforeTrigger(TimeTrigger):
+    def __init__(self, time_str: str) -> None:
+        super().__init__(time_str)
 
-# Problem 7
-# TODO: NotTrigger
-
-# Problem 8
-# TODO: AndTrigger
-
-# Problem 9
-# TODO: OrTrigger
+    def evaluate(self, story: NewsStory) -> bool:
+        story_time = story.get_pubdate()
+        # Make sure both timezones are same
+        story_time = story_time.replace(tzinfo=pytz.timezone("EST"))
+        return self.time > story_time
 
 
-#======================
+class AfterTrigger(TimeTrigger):
+    def __init__(self, time_str: str) -> None:
+        super().__init__(time_str)
+
+    def evaluate(self, story: NewsStory) -> bool:
+        story_time = story.get_pubdate()
+        # Make sure both timezones are same
+        story_time = story_time.replace(tzinfo=pytz.timezone("EST"))
+        return self.time < story_time
+
+
+class NotTrigger(Trigger):
+    def __init__(self, trigger: Trigger) -> None:
+        self.trigger = trigger
+
+    def evaluate(self, story: NewsStory) -> bool:
+        return not self.trigger.evaluate(story)
+
+
+class AndTrigger(Trigger):
+    def __init__(self, trigger_1: Trigger, trigger_2: Trigger) -> None:
+        self.trigger_1 = trigger_1
+        self.trigger_2 = trigger_2
+
+    def evaluate(self, story: NewsStory) -> bool:
+        return self.trigger_1.evaluate(story) and self.trigger_2.evaluate(story)
+
+
+class OrTrigger(Trigger):
+    def __init__(self, trigger_1: Trigger, trigger_2: Trigger) -> None:
+        self.trigger_1 = trigger_1
+        self.trigger_2 = trigger_2
+
+    def evaluate(self, story: NewsStory) -> bool:
+        return self.trigger_1.evaluate(story) or self.trigger_2.evaluate(story)
+
+# ======================
 # Filtering
-#======================
+# ======================
 
-# Problem 10
-def filter_stories(stories, triggerlist):
+
+def filter_stories(stories: list[NewsStory], triggerlist: list[Trigger]) -> list[NewsStory]:
     """
-    Takes in a list of NewsStory instances.
-
-    Returns: a list of only the stories for which a trigger in triggerlist fires.
+    Returns a list of only the stories for which a trigger in triggerlist fires.
     """
-    # TODO: Problem 10
-    # This is a placeholder
-    # (we're just returning all the stories, with no filtering)
-    return stories
+    filtered_stories = [
+        story for story in stories for trigger in triggerlist if trigger.evaluate(story)]
+    print(len(filtered_stories))
+    return filtered_stories
 
 
-
-#======================
+# ======================
 # User-Specified Triggers
-#======================
-# Problem 11
-def read_trigger_config(filename):
-    """
-    filename: the name of a trigger configuration file
-
-    Returns: a list of trigger objects specified by the trigger configuration
-        file.
-    """
-    # We give you the code to read in the file and eliminate blank lines and
-    # comments. You don't need to know how it works for now!
+# ======================
+def read_trigger_config(filename: str) -> list[Trigger]:
+    # Eliminate blanks and comments
     trigger_file = open(filename, 'r')
     lines = []
     for line in trigger_file:
@@ -190,55 +199,68 @@ def read_trigger_config(filename):
         if not (len(line) == 0 or line.startswith('//')):
             lines.append(line)
 
-    # TODO: Problem 11
-    # line is the list of lines that you need to parse and for which you need
-    # to build triggers
+    triggers = {}
+    follow_triggers = []
+    for line in lines:
+        parts = line.split(",")
+        if parts[0] != "ADD":
+            if parts[1] == "TITLE":
+                triggers[parts[0]] = TitleTrigger(parts[2])
+            if parts[1] == "DESCRIPTION":
+                triggers[parts[0]] = DescriptionTrigger(parts[2])
+            if parts[1] == "AFTER":
+                triggers[parts[0]] = AfterTrigger(parts[2])
+            if parts[1] == "BEFORE":
+                triggers[parts[0]] = BeforeTrigger(parts[2])
+            if parts[1] == "NOT":
+                triggers[parts[0]] = NotTrigger(triggers[parts[2]])
+            if parts[1] == "AND":
+                triggers[parts[0]] = AndTrigger(
+                    triggers[parts[2]], triggers[parts[3]])
+            if parts[1] == "OR":
+                triggers[parts[0]] = OrTrigger(
+                    triggers[parts[2]], triggers[parts[3]])
+        else:
+            for t in parts[1::]:
+                follow_triggers.append(triggers[t])
+    return follow_triggers
 
-    print(lines) # for now, print it so you see what it contains!
 
+SLEEPTIME = 120  # seconds -- how often to poll
 
-
-SLEEPTIME = 120 #seconds -- how often we poll
 
 def main_thread(master):
-    # A sample trigger list - you might need to change the phrases to correspond
-    # to what is currently in the news
     try:
-        t1 = TitleTrigger("election")
-        t2 = DescriptionTrigger("Trump")
-        t3 = DescriptionTrigger("Clinton")
-        t4 = AndTrigger(t2, t3)
-        triggerlist = [t1, t4]
+        triggerlist = read_trigger_config('triggers.txt')
 
-        # Problem 11
-        # TODO: After implementing read_trigger_config, uncomment this line 
-        # triggerlist = read_trigger_config('triggers.txt')
-        
-        # HELPER CODE - you don't need to understand this!
         # Draws the popup window that displays the filtered stories
         # Retrieves and filters the stories from the RSS feeds
         frame = Frame(master)
         frame.pack(side=BOTTOM)
         scrollbar = Scrollbar(master)
-        scrollbar.pack(side=RIGHT,fill=Y)
+        scrollbar.pack(side=RIGHT, fill=Y)
 
         t = "Google & Yahoo Top News"
         title = StringVar()
         title.set(t)
         ttl = Label(master, textvariable=title, font=("Helvetica", 18))
         ttl.pack(side=TOP)
-        cont = Text(master, font=("Helvetica",14), yscrollcommand=scrollbar.set)
+        cont = Text(master, font=("Helvetica", 14),
+                    yscrollcommand=scrollbar.set)
         cont.pack(side=BOTTOM)
         cont.tag_config("title", justify='center')
         button = Button(frame, text="Exit", command=root.destroy)
         button.pack(side=BOTTOM)
         guidShown = []
+
         def get_cont(newstory):
             if newstory.get_guid() not in guidShown:
                 cont.insert(END, newstory.get_title()+"\n", "title")
-                cont.insert(END, "\n---------------------------------------------------------------\n", "title")
+                cont.insert(
+                    END, "\n---------------------------------------------------------------\n", "title")
                 cont.insert(END, newstory.get_description())
-                cont.insert(END, "\n*********************************************************************\n", "title")
+                cont.insert(
+                    END, "\n*********************************************************************\n", "title")
                 guidShown.append(newstory.get_guid())
 
         while True:
@@ -248,13 +270,13 @@ def main_thread(master):
             stories = process("http://news.google.com/news?output=rss")
 
             # Get stories from Yahoo's Top Stories RSS news feed
-            stories.extend(process("http://news.yahoo.com/rss/topstories"))
+            # RSS Schema difference
+            # stories.extend(process("http://news.yahoo.com/rss/topstories"))
 
             stories = filter_stories(stories, triggerlist)
-
+            print(stories[0].get_title())
             list(map(get_cont, stories))
             scrollbar.config(command=cont.yview)
-
 
             print("Sleeping...")
             time.sleep(SLEEPTIME)
@@ -269,4 +291,3 @@ if __name__ == '__main__':
     t = threading.Thread(target=main_thread, args=(root,))
     t.start()
     root.mainloop()
-

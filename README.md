@@ -1,3 +1,31 @@
-# World of basic assignments
+# Hands On[^1]
 
-This is just a stay in touch with the basics repository. Try to read the problem statements and work through. The solutions are present here but links to unsolved files will be present wherever possible. This is also a playground for Git workflow management.
+## Table of contents
+* [Programming in Python](#programming-in-python2)
+* [Weather Plotting](#weather-plotting)
+
+## Programming in Python[^2]
+* ### Game of Hangman
+
+  It is an old school favorite, a word game where the goal is simply to guess the missing word one letter at a time.
+
+* ### Scrabble Word Game
+  
+  This game is a lot like Scrabble. Letters are dealt to the user, who then construct one or more words using their letters. Each valid word earns points to the user.
+
+* ### Permutation and Ciphers
+  
+  Generating permutations of a string in recursive fashion. Along with this, there is the implementation of Caesar Cipher - one of the earliest and simplest method of encryption technique.
+  
+* ### RSS Feed Filter/Trigger
+
+  A feed filter with the flexibility to mention custom triggers and conditions. With each poll the feed refreshes to display results as per the mentioned triggers.
+   
+## Weather Plotting
+
+  One thousand weather stations were sent out all over the world at the beginning of 2016, ready to be assembled and begin collecting global weather data. The idea here is to get data from these stations and plot any particular dimension on a geo plot. You can check the end plot [here](WeatherPlotting/README.md#end-result)
+  
+ 
+[^1]: You are looking at a collection of different problem sets or ideas tha in my opinion don't need a seperate repository of their own.
+Wherever possible, the source to a problem set will be mentioned.
+[^2]:  Introduction to Computer Science and Programming in Python - https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/assignments/

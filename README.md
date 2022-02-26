@@ -3,6 +3,7 @@
 ## Table of contents
 * [Programming in Python](#programming-in-python2)
 * [Weather Plotting](#weather-plotting)
+* [Pong Game](#pong-game)
 
 ## Programming in Python[^2]
 * ### Game of Hangman
@@ -25,6 +26,9 @@
 
   One thousand weather stations were sent out all over the world at the beginning of 2016, ready to be assembled and begin collecting global weather data. The idea here is to get data from these stations and plot any particular dimension on a geo plot. You can check the end plot [here](WeatherPlotting/README.md#end-result)
   
+## Pong Game
+
+  Python implemtation of Pong - one of the first computer games that ever created, this simple "tennis like" game features two paddles and a ball, the goal is to defeat your opponent by being the first one to gain 10 points.
  
 [^1]: You are looking at a collection of different problem sets or ideas tha in my opinion don't need a seperate repository of their own.
 Wherever possible, the source to a problem set will be mentioned.

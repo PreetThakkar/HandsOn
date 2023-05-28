@@ -4,6 +4,7 @@
 * [Programming in Python](#programming-in-python2)
 * [Weather Plotting](#weather-plotting)
 * [Pong Game](#pong-game)
+* [Wiki Anonymous Edit Tracker](#wiki-anonymous-edit-tracker)
 
 ## Programming in Python[^2]
 * ### Game of Hangman
@@ -33,3 +34,7 @@
 [^1]: You are looking at a collection of different problem sets or ideas tha in my opinion don't need a seperate repository of their own.
 Wherever possible, the source to a problem set will be mentioned.
 [^2]:  Introduction to Computer Science and Programming in Python - https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-0001-introduction-to-computer-science-and-programming-in-python-fall-2016/assignments/
+
+## Wiki Anonymous Edit Tracker
+
+  The application traces anonymous edits make on any given Wikipedia page by extracting edit IP addresses and transforming it to geographical coordinates. These coordinates are then utilized to plot the edits on the world map providing a visual representation of their locations. Tou can checn the end plot [here](Wiki%20Edit%20Tracker/plot.png)
